@@ -1,0 +1,596 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from skimage import exposure
+import os
+import cv2
+from sklearn.model_selection import train_test_split
+import numpy as np
+from skimage import io, color, feature, exposure
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.preprocessing import LabelEncoder
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+# Load the training dataset
+train_dataset_path = "C:\\Users\\Monia\\Desktop\\python\\Dataset\\train.csv"
+train_dataset = pd.read_csv(train_dataset_path)
+
+# Filter the training dataset based on different classes
+class1_train = train_dataset[train_dataset['healthy'] == 1]  # Assuming 'healthy' represents class 1
+class2_train = train_dataset[train_dataset['multiple_diseases'] == 1]  # Assuming 'multiple_diseases' represents class 2
+class3_train = train_dataset[train_dataset['rust'] == 1]  # Assuming 'rust' represents class 3
+class4_train = train_dataset[train_dataset['scab'] == 1]  # Assuming 'scab' represents class 4
+
+# Concatenate the classes into a single dataset
+three_classes_train = pd.concat([class1_train, class2_train, class3_train, class4_train])
+
+# Split the dataset into training (700) and test (300)
+train_data, test_data = train_test_split(three_classes_train, test_size=250, train_size=1000, random_state=42)
+
+# Save the resulting datasets if needed
+train_data.to_csv('train_dataset.csv', index=False)
+test_data.to_csv('test_dataset.csv', index=False)
+
+print("Shape of Training Data:", train_data.shape)
+print("Shape of Test Data:", test_data.shape)
+
+# Print the first few rows of resulting datasets
+print("\nTraining Data:")
+print(train_data.head())
+
+print("\nTest Data:")
+print(test_data.head())
+
+import cv2
+import os
+import pandas as pd
+
+# Functions for image processing
+def load_image(image_path):
+    image = cv2.imread(image_path)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image
+
+def resize_image(image, target_size=(64, 64)):
+    image = cv2.resize(image, target_size)
+    return image
+
+# Path to the directory where your images are stored
+dataset_path = "C:\\Users\\Monia\\Desktop\\python\\Dataset\\images"
+
+# Output directory for resized images
+output_directory = "C:\\Users\\Monia\\Desktop\\python\\Dataset\\resized_images"
+
+# List of CSV files containing image IDs
+csv_files = [
+    "C:\\Users\\Monia\\Desktop\\python\\train_dataset.csv",
+    "C:\\Users\\Monia\\Desktop\\python\\train_dataset.csv"
+]  # Update with your actual file paths
+
+# Ensure the output directory exists
+os.makedirs(output_directory, exist_ok=True)
+
+# Iterate through each CSV file
+for csv_file_path in csv_files:
+    # Read the CSV file with image IDs
+    image_ids = pd.read_csv(csv_file_path)['image_id']
+
+    # Loop through the image IDs and resize corresponding images
+    for image_id in image_ids:
+        image_path = os.path.join(dataset_path, image_id + ".jpg")  # Assuming image file extension is '.jpg'
+
+        # Check if the image file exists before processing
+        if os.path.exists(image_path):
+            # Load the image
+            image = load_image(image_path)
+
+            # Resize the image
+            resized_image = resize_image(image)
+
+            # Save the resized image to the output directory
+            output_path = os.path.join(output_directory, image_id + "_resized.jpg")
+            cv2.imwrite(output_path, resized_image)
+        else:
+            print(f"Image file not found for ID: {image_id}")
+
+print("Resizing complete.")
+
+
+
+
+
+import os
+import numpy as np
+from skimage import io, color, feature, exposure
+import matplotlib.pyplot as plt
+
+def extract_hog_features(image):
+    # Convert the image to grayscale
+    gray_image = color.rgb2gray(image)
+
+    # Calculate HOG features
+    hog_features, hog_image = feature.hog(gray_image, visualize=True)
+
+    # Enhance the contrast of the HOG image for better visualization
+    hog_image_rescaled = exposure.rescale_intensity(hog_image, in_range=(0, 10))
+
+    return hog_features, hog_image_rescaled
+
+# Path to the root folder of your dataset
+dataset_path = "C:\\Users\\Meriam\\Downloads\\python (3)\\python\\Dataset"
+# List all subdirectories (assuming each subdirectory corresponds to a class)
+class_folders = [f.path for f in os.scandir(dataset_path) if f.is_dir()]
+features_list = []
+labels_list = []
+
+# Loop through each class folder
+for class_folder in class_folders:
+    class_name = os.path.basename(class_folder)
+
+    # Loop through each image in the class folder
+    for image_filename in os.listdir(class_folder):
+        image_path = os.path.join(class_folder, image_filename)
+
+        # Load the image
+        image = io.imread(image_path)
+
+        # Extract HOG features and visualize
+        hog_features, hog_image = extract_hog_features(image)
+
+        # Display the original image and the HOG features
+        print(f"Image: {image_filename}, HOG features shape: {hog_features.shape}")
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(2, 2), sharex=True, sharey=True)
+
+        ax1.axis('off')
+        ax1.imshow(image, cmap=plt.cm.gray)
+        
+
+        ax2.axis('off')
+        ax2.imshow(hog_image, cmap=plt.cm.gray)
+        
+
+        plt.show()
+
+        # Store information about extracted features
+        num_features = hog_features.shape[0]  # Number of extracted features
+        feature_names = [f'HOG_feature_{i}' for i in range(num_features)]  # Creating feature names
+        features_list.append(hog_features)
+        
+        # Append the label to the labels list
+        labels_list.append(class_name)
+
+        # Display information about features
+        print(f"Number of features extracted: {num_features}")
+        print(f"Feature names: {feature_names}")
+        print(f"Dimensions of features: {hog_features.shape}")
+
+# Convert the features list to a NumPy array
+features_array = np.array(features_list)
+# Convert the labels list to a NumPy array
+labels_array = np.array(labels_list)
+
+# Perform further processing or analysis using features_array and labels_array
+
+
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+
+hog_features_array = np.array(features_list)
+labels_array = np.array(labels_list)
+
+# Use LabelEncoder to convert class names into numeric labels
+label_encoder = LabelEncoder()
+numeric_labels = label_encoder.fit_transform(labels_array)
+
+print(hog_features_array)
+print(numeric_labels)
+num_features = hog_features_array.shape[1]
+print(f"Number of features: {num_features}")
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(hog_features_array, numeric_labels, test_size=0.2, random_state=42)
+# Create arrays for train and test data
+train_data = [X_train, y_train]
+test_data = [X_test, y_test]
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+
+# Assuming 'features_array' contains the extracted HOG features and 'labels_array' are the class labels
+
+# Reduce dimensionality using PCA
+pca = PCA(n_components=2)
+hog_features_2D = pca.fit_transform(hog_features_array)
+
+# Feature scaling
+scaler = StandardScaler()
+hog_features_2D_scaled = scaler.fit_transform(hog_features_2D)
+
+# Experiment with different values of k to find the optimal number of clusters
+silhouette_scores = []
+for k in range(2, 10):
+    kmeans = KMeans(n_clusters=4, n_init=10, random_state=42)
+    kmeans.fit(hog_features_2D_scaled)
+    cluster_labels = kmeans.labels_
+    silhouette_avg = silhouette_score(hog_features_2D_scaled, cluster_labels)
+    silhouette_scores.append(silhouette_avg)
+    print(f"For k={k}, silhouette score: {silhouette_avg}")
+
+# Choose the k with the highest silhouette score
+optimal_k = silhouette_scores.index(max(silhouette_scores)) + 2  # Add 2 because we started from k=2
+
+# Perform k-means clustering with the optimal number of clusters using scaled features
+kmeans = KMeans(n_clusters=4, n_init=10, init='k-means++', random_state=42, max_iter=300)
+kmeans.fit(hog_features_2D_scaled)
+cluster_labels = kmeans.labels_
+centroids = kmeans.cluster_centers_
+
+# Map cluster labels to corresponding class colors
+cluster_color_mapping = {
+    0: 'blue',    # healthy
+    1: 'green',   # multiple_diseases
+    2: 'red',     # rust
+    3: 'purple'   # scab
+    # Add more mappings for each cluster label if needed
+}
+
+# Create a list of colors corresponding to cluster labels
+predicted_colors = [cluster_color_mapping[label] for label in cluster_labels]
+
+# Scatter plot for HOG features with cluster labels using assigned colors
+plt.scatter(hog_features_2D[:, 0], hog_features_2D[:, 1], c=predicted_colors, label='Data Points')
+plt.scatter(centroids[:, 0], centroids[:, 1], c='yellow', marker='X', s=300, label='Centroids')  # Adding centroids
+plt.title('K-means Clustering of HOG Features (PCA-reduced) with Cluster Labels and Centroids')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.legend()
+plt.show()
+
+# Evaluate the clustering using silhouette score
+silhouette_avg_final = silhouette_score(hog_features_2D_scaled, cluster_labels)
+print(f"The average silhouette score for clustering: {silhouette_avg_final}")
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+
+# Assuming 'features_array' contains the extracted HOG features and 'labels_array' are the class labels
+
+# Reduce dimensionality using PCA
+pca = PCA(n_components=2)
+hog_features_2D = pca.fit_transform(hog_features_array)
+
+# Feature scaling
+scaler = StandardScaler()
+hog_features_2D_scaled = scaler.fit_transform(hog_features_2D)
+
+# Experiment with different values of k to find the optimal number of clusters
+silhouette_scores = []
+for k in range(2, 10):
+    kmeans = KMeans(n_clusters=4, n_init=10, random_state=42)
+    kmeans.fit(hog_features_2D_scaled)
+    cluster_labels = kmeans.labels_
+    silhouette_avg = silhouette_score(hog_features_2D_scaled, cluster_labels)
+    silhouette_scores.append(silhouette_avg)
+    print(f"For k={k}, silhouette score: {silhouette_avg}")
+
+# Choose the k with the highest silhouette score
+optimal_k = silhouette_scores.index(max(silhouette_scores)) + 2  # Add 2 because we started from k=2
+
+# Perform k-means clustering with the optimal number of clusters using scaled features
+kmeans = KMeans(n_clusters=4, n_init=10, init='k-means++', random_state=42, max_iter=300)
+kmeans.fit(hog_features_2D_scaled)
+cluster_labels = kmeans.labels_
+centroids = kmeans.cluster_centers_
+
+# Map cluster labels to corresponding class colors
+cluster_color_mapping = {
+    0: 'blue',    # healthy
+    1: 'green',   # multiple_diseases
+    2: 'red',     # rust
+    3: 'purple'   # scab
+    # Add more mappings for each cluster label if needed
+}
+
+# Create a list of colors corresponding to cluster labels
+predicted_colors = [cluster_color_mapping[label] for label in cluster_labels]
+
+# Scatter plot for HOG features with cluster labels using assigned colors
+plt.scatter(hog_features_2D[:, 0], hog_features_2D[:, 1], c=predicted_colors, label='Data Points')
+plt.scatter(centroids[:, 0], centroids[:, 1], c='yellow', marker='X', s=300, label='Centroids')  # Adding centroids
+plt.title('K-means Clustering of HOG Features (PCA-reduced) with Cluster Labels and Centroids')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.legend()
+plt.show()
+
+# Evaluate the clustering using silhouette score
+silhouette_avg_final = silhouette_score(hog_features_2D_scaled, cluster_labels)
+print(f"The average silhouette score for clustering: {silhouette_avg_final}")
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+
+# Assuming you have X_test (test features), y_test (test labels),
+# X_train (training features), y_train (training labels)
+
+# Scale the features (using the same scaler as used for training data)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Apply PCA for visualization (assuming two principal components)
+pca = PCA(n_components=2)
+X_train_pca = pca.fit_transform(X_train_scaled)
+X_test_pca = pca.transform(X_test_scaled)
+
+# Initialize and train the Logistic Regression model on the training data
+model = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+model.fit(X_train_pca, y_train)
+
+# Get predictions for the test data
+predictions = model.predict(X_test_pca)
+
+# Plotting the test set result
+plt.figure(figsize=(8, 6))
+plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=predictions, s=30, cmap='viridis')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('Test Set Result')
+plt.colorbar(label='Predicted Class')
+plt.show()
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+
+# Assuming you have X_test (test features), y_test (test labels),
+# X_train (training features), y_train (training labels)
+
+# Scale the features (using the same scaler as used for training data)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Apply PCA for visualization (assuming two principal components)
+pca = PCA(n_components=2)
+X_train_pca = pca.fit_transform(X_train_scaled)
+X_test_pca = pca.transform(X_test_scaled)
+
+# Initialize and train the Logistic Regression model on the training data
+model = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+model.fit(X_train_pca, y_train)
+
+# Get predictions for the test data
+predictions = model.predict(X_test_pca)
+
+# Plotting the test set result
+plt.figure(figsize=(8, 6))
+plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=predictions, s=30, cmap='viridis')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('Test Set Result')
+plt.colorbar(label='Predicted Class')
+plt.show()
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.decomposition import PCA
+from sklearn.model_selection import cross_val_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+# Assuming you have hog_features_2D (HOG features) and y (target variable with 4 classes)
+
+# Scale the HOG features if necessary
+scaler = StandardScaler()
+hog_features_2D_scaled = scaler.fit_transform(hog_features_2D)
+
+# Apply PCA for visualization (assuming two principal components)
+pca = PCA(n_components=2)
+hog_features_2D_pca = pca.fit_transform(hog_features_2D_scaled)
+
+# Define your 'y' variable with class labels (replace this with your actual labels)
+num_samples = hog_features_2D.shape[0]  # Replace with the actual number of samples
+class_labels = [0, 1, 2, 3]  # List of your 4 class labels
+
+# Generate random class labels for the samples (example)
+y = np.random.choice(class_labels, size=num_samples)
+
+# Initialize Logistic Regression model with 'multinomial' solver for multiclass problems
+model = LogisticRegression(multi_class='multinomial', solver='saga', max_iter=1000, penalty='l2')
+
+# Fit the model on the scaled HOG features and the target variable y
+model.fit(hog_features_2D_scaled, y)
+
+# Make predictions on the entire dataset
+predictions = model.predict(hog_features_2D_scaled)
+
+# Evaluate the model on the entire dataset
+accuracy = accuracy_score(y, predictions)
+print(f"Accuracy: {accuracy}")
+print(classification_report(y, predictions, zero_division=1))  # Set zero_division to 1
+
+# Perform cross-validation on the entire dataset
+cv_scores = cross_val_score(model, hog_features_2D_scaled, y, cv=5)
+
+# Print the cross-validation scores
+print("Cross-validation scores:", cv_scores)
+print("Mean accuracy:", np.mean(cv_scores))
+
+# Create a confusion matrix for the entire dataset
+conf_matrix = confusion_matrix(y, predictions)
+
+# Display the confusion matrix using a heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues',
+            xticklabels=['Class 0', 'Class 1', 'Class 2', 'Class 3'],
+            yticklabels=['Class 0', 'Class 1', 'Class 2', 'Class 3'])
+plt.xlabel('Predicted Labels')
+plt.ylabel('True Labels')
+plt.title('Confusion Matrix (Entire Dataset)')
+plt.show()
+# Fit PCA on scaled HOG features
+hog_features_2D_scaled = scaler.fit_transform(hog_features_2D)
+hog_features_2D_pca = pca.fit_transform(hog_features_2D_scaled)
+
+# Fit Logistic Regression model on the PCA-transformed HOG features and the target variable y
+model.fit(hog_features_2D_pca, y)
+
+# Plot decision boundaries and entire dataset
+x_min, x_max = hog_features_2D_pca[:, 0].min() - 1, hog_features_2D_pca[:, 0].max() + 1
+y_min, y_max = hog_features_2D_pca[:, 1].min() - 1, hog_features_2D_pca[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1), np.arange(y_min, y_max, 0.1))
+Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+
+plt.figure(figsize=(8, 6))
+plt.contourf(xx, yy, Z, alpha=0.4)
+plt.scatter(hog_features_2D_pca[:, 0], hog_features_2D_pca[:, 1], c=y, s=20, edgecolor='k', cmap=plt.cm.Paired)
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('Decision Boundaries and Entire Dataset')
+plt.show()
+
+
+# (The remaining part of the code for visualization using PCA)
+# ... (Continuation of your original code for PCA and visualization)
+
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+
+# Assuming you have X_test (test features), y_test (test labels),
+# X_train (training features), y_train (training labels)
+
+# Scale the features (using the same scaler as used for training data)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Apply PCA for visualization (assuming two principal components)
+pca = PCA(n_components=2)
+X_train_pca = pca.fit_transform(X_train_scaled)
+X_test_pca = pca.transform(X_test_scaled)
+
+# Initialize and train the Logistic Regression model on the training data
+model = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+model.fit(X_train_pca, y_train)
+
+# Get predictions for the test data
+predictions = model.predict(X_test_pca)
+
+# Plotting the test set result
+plt.figure(figsize=(8, 6))
+plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=predictions, s=30, cmap='viridis')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('Test Set Result')
+plt.colorbar(label='Predicted Class')
+plt.show()
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+
+# Assuming you have X_test (test features), y_test (test labels),
+# X_train (training features), y_train (training labels)
+
+# Scale the features (using the same scaler as used for training data)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Apply PCA for visualization (assuming two principal components)
+pca = PCA(n_components=2)
+X_train_pca = pca.fit_transform(X_train_scaled)
+X_test_pca = pca.transform(X_test_scaled)
+
+# Initialize and train the Logistic Regression model on the training data
+model = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+model.fit(X_train_pca, y_train)
+
+# Get predictions for the test data
+predictions = model.predict(X_test_pca)
+
+# Plotting the test set result
+plt.figure(figsize=(8, 6))
+plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=predictions, s=30, cmap='viridis')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('Test Set Result')
+plt.colorbar(label='Predicted Class')
+plt.show()
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+
+# Assuming you have X_test (test features), y_test (test labels),
+# X_train (training features), y_train (training labels)
+
+# Scale the features (using the same scaler as used for training data)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Apply PCA for visualization (assuming two principal components)
+pca = PCA(n_components=2)
+X_train_pca = pca.fit_transform(X_train_scaled)
+X_test_pca = pca.transform(X_test_scaled)
+
+# Initialize and train the Logistic Regression model on the training data
+model = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+model.fit(X_train_pca, y_train)
+
+# Get predictions for the test data
+predictions = model.predict(X_test_pca)
+
+# Plotting the test set result
+plt.figure(figsize=(8, 6))
+plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=predictions, s=30, cmap='viridis')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('Test Set Result')
+plt.colorbar(label='Predicted Class')
+plt.show()
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+
+# Assuming you have X_test (test features), y_test (test labels),
+# X_train (training features), y_train (training labels)
+
+# Scale the features (using the same scaler as used for training data)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Apply PCA for visualization (assuming two principal components)
+pca = PCA(n_components=2)
+X_train_pca = pca.fit_transform(X_train_scaled)
+X_test_pca = pca.transform(X_test_scaled)
+
+# Initialize and train the Logistic Regression model on the training data
+model = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+model.fit(X_train_pca, y_train)
+
+# Get predictions for the test data
+predictions = model.predict(X_test_pca)
+
+# Plotting the test set result
+plt.figure(figsize=(8, 6))
+plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=predictions, s=30, cmap='viridis')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('Test Set Result')
+plt.colorbar(label='Predicted Class')
+plt.show()
