@@ -268,72 +268,11 @@ plt.ylabel('Within-Cluster Sum of Squares (WCSS)')
 plt.title('Elbow Method for Optimal k')
 plt.grid(True)
 plt.show()
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.linear_model import LogisticRegression
 
-# Assuming you have X_test (test features), y_test (test labels),
-# X_train (training features), y_train (training labels)
 
-# Scale the features (using the same scaler as used for training data)
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
 
-# Apply PCA for visualization (assuming two principal components)
-pca = PCA(n_components=2)
-X_train_pca = pca.fit_transform(X_train_scaled)
-X_test_pca = pca.transform(X_test_scaled)
 
-# Initialize and train the Logistic Regression model on the training data
-model = LogisticRegression(multi_class='multinomial', solver='lbfgs')
-model.fit(X_train_pca, y_train)
 
-# Get predictions for the test data
-predictions = model.predict(X_test_pca)
-
-# Plotting the test set result
-plt.figure(figsize=(8, 6))
-plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=predictions, s=30, cmap='viridis')
-plt.xlabel('Principal Component 1')
-plt.ylabel('Principal Component 2')
-plt.title('Test Set Result')
-plt.colorbar(label='Predicted Class')
-plt.show()
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.linear_model import LogisticRegression
-
-# Assuming you have X_test (test features), y_test (test labels),
-# X_train (training features), y_train (training labels)
-
-# Scale the features (using the same scaler as used for training data)
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-# Apply PCA for visualization (assuming two principal components)
-pca = PCA(n_components=2)
-X_train_pca = pca.fit_transform(X_train_scaled)
-X_test_pca = pca.transform(X_test_scaled)
-
-# Initialize and train the Logistic Regression model on the training data
-model = LogisticRegression(multi_class='multinomial', solver='lbfgs')
-model.fit(X_train_pca, y_train)
-
-# Get predictions for the test data
-predictions = model.predict(X_test_pca)
-
-# Plotting the test set result
-plt.figure(figsize=(8, 6))
-plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=predictions, s=30, cmap='viridis')
-plt.xlabel('Principal Component 1')
-plt.ylabel('Principal Component 2')
-plt.title('Test Set Result')
-plt.colorbar(label='Predicted Class')
-plt.show()
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
@@ -343,7 +282,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-# Assuming you have hog_features_2D (HOG features) and y (target variable with 4 classes)
 
 # Scale the HOG features if necessary
 scaler = StandardScaler()
@@ -414,8 +352,6 @@ plt.xlabel('Principal Component 1')
 plt.ylabel('Principal Component 2')
 plt.title('Decision Boundaries and Entire Dataset')
 plt.show()
-
-
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, auc
@@ -425,7 +361,7 @@ import seaborn as sns
 import numpy as np
 
 # Assuming you have hog_features_2D (HOG features) and y (target variable with 4 classes)
-
+test_data = [X_test, y_test]
 # Scale the HOG features if necessary
 scaler = StandardScaler()
 hog_features_2D_scaled = scaler.fit_transform(hog_features_2D)
